@@ -1,7 +1,7 @@
 ## Server
 - python3 -m venv env // python -m venv envWin
 - source env/bin/activate // .\envWin\Scripts\activate -> python.exe -m pip install --upgrade pip
-- pip install django mysqlclient djangorestframework
+- pip install django mysqlclient djangorestframework django-cors-headers djangorestframework-simplejwt
 - django-admin startproject server
 - ./server/server/settings.py
 ```bash
