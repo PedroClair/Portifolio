@@ -1,70 +1,171 @@
-# Getting Started with Create React App
+## Server
+- python3 -m venv env // python -m venv envWin
+- source env/bin/activate // .\envWin\Scripts\activate -> python.exe -m pip install --upgrade pip
+- pip install django mysqlclient djangorestframework
+- django-admin startproject server
+- ./server/server/settings.py
+```bash
+    DATABASES = {
+      'default': {
+          'ENGINE': 'django.db.backends.mysql', 
+          'NAME': 'performance',
+          'USER': 'root',
+          'PASSWORD': 'ibd2024',    # or mysql password
+          'HOST': '127.0.0.1',      # maybe localhost in MySQL
+          'PORT': '3306',           # Generaly the port 3306 is the standart of MySQL
+        }
+    }
+```
+- create database performance; (python-connector or workbench or sever)
+- cd server/
+- python manage.py startapp users
+- server/settings.py 
+```bash
+  INSTALLED_APPS = [
+      # other apps
+      'rest_framework',
+      'users',  # your new app
+  ]
+```
+- create server/users/serializers.py
+```bash
+  from django.contrib.auth.models import User
+  from rest_framework import serializers
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+  class UserSerializer(serializers.ModelSerializer):
+      class Meta:
+          model = User
+          fields = ('id', 'username', 'email', 'password')
+          extra_kwargs = {'password': {'write_only': True}}
 
-## Available Scripts
+      def create (self, validated_data):
+          user = User.objects.create_user(
+              username=validated_data['username'],
+              email=validated_data['email'],
+              password=validated_data['password'],
+          )
+          return user
+```
+- server/users/views.py
+```bash
+from rest_framework import generics
+from .serializers import UserSerializer
+from rest_framework.response import Response
+from rest_framework import status
 
-In the project directory, you can run:
+# Create your views here.
+class RegisterUserView(generics.CreateAPIView):
+    serializer_class = UserSerializer
 
-### `npm start`
+    def post(self, resquest, *args, **kwargs):
+        serializer = self.get_serializer(data=resquest.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message":"User created sucessfully"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- server/server/urls.py
+```bash
+  from django.contrib import admin
+  from django.urls import path
+  from users.views import RegisterUserView
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+  urlpatterns = [
+      path('admin/', admin.site.urls),
+      path('api/register/', RegisterUserView.as_view(), name='register'),
+  ]
+```
+- python manage.py migrate
+- python manage.py runserver
 
-### `npm test`
+## End Server
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Interface
+- node -v
+- npm -v
+- npx create-react-app interface
+- cd interface
+- npm install axios
+- interface/src/Register.js
+```bash
+// src/Register.js
+import React, { useState } from 'react';
+import axios from 'axios';
 
-### `npm run build`
+function Register() {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/api/register/', {
+        username,
+        email,
+        password,
+      });
+      setMessage(response.data.message);
+    } catch (error) {
+      setMessage("An error occurred while creating the user.");
+    }
+  };
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+  return (
+    <div>
+      <h2>Register</h2>
+      <form onSubmit={handleRegister}>
+        <div>
+          <label>Username:</label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label>Email:</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label>Password:</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit">Register</button>
+      </form>
+      {message && <p>{message}</p>}
+    </div>
+  );
+}
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+export default Register;
+```
+- interface/src/App.js
+```bash
+import React from 'react';
+import Register from './Register';
 
-### `npm run eject`
+function App() {
+  return (
+    <div className="App">
+      <h1>User Registration</h1>
+      <Register />
+    </div>
+  );
+}
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+export default App;
+```
