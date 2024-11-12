@@ -67,9 +67,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware'
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = True
 
 ROOT_URLCONF = 'server.urls'
 
@@ -100,7 +98,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'performance',
         'USER': 'root',
-        'PASSWORD': 'ibd2024',
+        'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '3306',
     }
